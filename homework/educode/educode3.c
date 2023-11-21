@@ -96,7 +96,8 @@ Real generateLongReal(void)
 // **********************************************
 // << Your source code starts here >>
 //
-Real addTwoLongReals(Real real1, Real real2) {
+Real addTwoLongReals(Real real1, Real real2) 
+{
     Real r;
     int i;
     int carry = 0;

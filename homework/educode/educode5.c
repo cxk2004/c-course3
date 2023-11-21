@@ -1,8 +1,14 @@
+/*
+ * Calculator-06: long real with float point, operating array by pointers
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 
 #define MAX_REAL_WIDTH   25
+ //#define DEBUG_PROMOTION  
 
 typedef struct {
     char digits[MAX_REAL_WIDTH];
@@ -43,14 +49,15 @@ void shiftDigitsToLeft(char number[], int shiftLength);
 // Display the number in a fixed width
 void displayFixedWidthNumber(char number[], const int width);
 
-
 int main(void)
 {
 
-    printf("Calculator-04 : sum two long real numbers with points\n");
+    printf("\n");
+    printf(" Calculator-05 : sum two long real numbers with points\n");
     printf(" Data structure: a struct (Real): char array (digits[]), integer (length), integer (pointPos)\n");
-    printf(" Assumption    : two real numbers are with different width (less than %d digits)\n", MAX_REAL_WIDTH);
-    printf("               : and different points position, not support for addition promotion\n");
+    printf(" Assumption    : two real numbers are with different width (less than %d digits) and points\n", MAX_REAL_WIDTH);
+    printf("               : support for addition promotion\n");
+    printf(" Operation Req.: operate the char array by pointers\n");
     printf("\n");
 
     int SEED;
@@ -81,32 +88,37 @@ int main(void)
     return 0;
 }
 
+
 // **********************************************
 // << Functions about struct of Real >>
 // **********************************************
 
 Real generateLongReal(void)
 {
-
     Real r;
+
+#ifndef DEBUG_PROMOTION
     r.length = 2 + rand() % (MAX_REAL_WIDTH - 1); // 1 stands for the bit of pointer/dot
     r.pointPos = 1 + rand() % (r.length);
+#else
+    //// test for addition promotion
+    r.length = 20;
+    r.pointPos = 11;
+#endif
 
-    r.digits[0] = '1' + rand() % 9;
-
-    int i;
-    for (i = 1; i < r.length - 1; i++)
+    char* cPtr = r.digits;
+    *cPtr = '1' + rand() % 9;
+    for (cPtr++; cPtr < r.digits + r.length - 1; cPtr++)
     {
-        r.digits[i] = '0' + rand() % 10;
+        *cPtr = '0' + rand() % 10;
     }
+    for (; cPtr < r.digits + MAX_REAL_WIDTH; cPtr++)
+    {
+        *cPtr = '\0';
+    }
+
     r.digits[r.length - 1] = '1' + rand() % 9;
     r.digits[r.pointPos - 1] = '.';
-
-    // clear the rest of the memory
-    for (i = r.length; i < MAX_REAL_WIDTH; i++)
-    {
-        r.digits[i] = '\0';
-    }
 
     printf("Generated (%2d.%2d): ", r.length, r.length - r.pointPos);
     displayFixedWidthNumber(r.digits, MAX_REAL_WIDTH);
@@ -119,7 +131,7 @@ Real generateLongReal(void)
 //
 Real addTwoLongReals(Real real1, Real real2)
 {
-    int rightLength = ( real1.length - real1.pointPos > real2.length - real2.pointPos ) ? real1.length - real1.pointPos : real2.length - real2.pointPos ;
+     int rightLength = ( real1.length - real1.pointPos > real2.length - real2.pointPos ) ? real1.length - real1.pointPos : real2.length - real2.pointPos ;
     shiftDigitsToRight( real1.digits , MAX_REAL_WIDTH - rightLength - real1.pointPos );
     shiftDigitsToRight( real2.digits , MAX_REAL_WIDTH - rightLength - real2.pointPos );
     Real sum , initial1 = real1 , initial2 = real2 ;
@@ -197,7 +209,6 @@ Real addTwoLongReals(Real real1, Real real2)
 // << Your source code stops here >>
 // **********************************************
 
-
 int getPointPos(Real r)
 {
     return  r.pointPos;
@@ -217,9 +228,10 @@ void displayAssignedLongReal(int pointPos, Real r)
     {
         printf(" ");
     }
-    for (i = 0; i < r.length; i++)
+    char* cPtr = NULL;
+    for (cPtr = r.digits; cPtr < r.digits + r.length; cPtr++)
     {
-        printf("%c", r.digits[i]);
+        printf("%c", *cPtr);
     }
     printf("\n");
 
@@ -240,13 +252,14 @@ void shiftDigitsToRight(char longNumber[], int shiftLength)
     }
 
     int i;
+    char* cPtr = longNumber;
     for (i = MAX_REAL_WIDTH - 1; i - shiftLength >= 0; i--)
     {
-        longNumber[i] = longNumber[i - shiftLength];
+        *(cPtr + i) = *(cPtr + i - shiftLength);
     }
     for (; i >= 0; i--)
     {
-        longNumber[i] = '\0';
+        *(cPtr + i) = '\0';
     }
 
     printf("shiftRight (%2d)  : ", shiftLength);
@@ -265,13 +278,14 @@ void shiftDigitsToLeft(char longNumber[], int shiftLength)
     }
 
     int i;
+    char* cPtr = longNumber;
     for (i = 0; i + shiftLength < MAX_REAL_WIDTH; i++)
     {
-        longNumber[i] = longNumber[i + shiftLength];
+        *(cPtr + i) = *(cPtr + i + shiftLength);
     }
     for (; i < MAX_REAL_WIDTH; i++)
     {
-        longNumber[i] = '\0';
+        *(cPtr + i) = '\0';
     }
 
     printf("shiftLeft  (%2d)  : ", shiftLength);
@@ -283,19 +297,20 @@ void shiftDigitsToLeft(char longNumber[], int shiftLength)
 
 void displayFixedWidthNumber(char number[], const int width)
 {
-    int i;
-    for (i = 0; i < width; i++)
+    char* cPtr = NULL;
+    for (cPtr = number; cPtr < number + width; cPtr++)
     {
-        if (number[i] == '\0')
+        if (*cPtr == '\0')
         {
             printf("_");
         }
         else
         {
-            printf("%c", number[i]);
+            printf("%c", *cPtr);
         }
     }
     printf("\n");
 
     return;
 }
+
